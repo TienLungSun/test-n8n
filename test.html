@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>n8n Chatbot</title>
+</head>
+<body>
+    <h2>Chatbot</h2>
+    <input type="text" id="userInput" placeholder="輸入訊息">
+    <button onclick="sendMessage()">發送</button>
+    <div id="chatOutput"></div>
+
+    <script>
+        async function sendMessage() {
+            let userMessage = document.getElementById("userInput").value;
+            let response = await fetch("你的_n8n_Webhook_URL", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userMessage })
+            });
+            let data = await response.json();
+            document.getElementById("chatOutput").innerText = "Chatbot: " + data.reply;
+        }
+    </script>
+</body>
+</html>
