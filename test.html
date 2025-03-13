@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> n8n AI Agent 測試網頁 </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+            font-size: 20px;
+        }
+        h2 {
+            font-size: 28px;
+        }
+        input {
+            width: 100%;
+            font-size: 18px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        button {
+            font-size: 18px;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            min-height: 200px;
+            font-size: 18px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h2> n8n AI Agent 測試網頁</h2>
+    <input type="text" id="question" placeholder="請輸入你的問題">
+    <button onclick="askAI()">送出</button>
+    <div id="response"></div>
+
+    <script>
+        function askAI() {
+            const question = document.getElementById("question").value;
+            if (!question) {
+                alert("請輸入問題");
+                return;
+            }
+            
+            fetch("http://localhost:5678/webhook/ask-ai", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ question })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("response").innerText = data.answer || "無回應";
+            })
+            .catch(error => {
+                console.error("錯誤:", error);
+                document.getElementById("response").innerText = "請求失敗";
+            });
+        }
+    </script>
+</body>
+</html>
