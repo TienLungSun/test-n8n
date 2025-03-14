@@ -48,16 +48,16 @@
                 return;
             }
             
-            fetch("https://tw-03.access.glows.ai:24434/webhook/ask-ai", {
+            fetch("https://tw-03.access.glows.ai:24434/webhook/9689574d-4cbe-41e1-8076-c540a8f89158/chat", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ question })
+                body: JSON.stringify({ question:question })
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById("response").innerText = data.answer || "無回應";
+                document.getElementById("response").innerText = data.output || "無回應";
             })
             .catch(error => {
                 console.error("錯誤:", error);
