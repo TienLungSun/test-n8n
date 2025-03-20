@@ -52,16 +52,11 @@
         #imageUpload {
             display: none;
         }
-        button {
-            font-size: 18px;
-            padding: 10px;
-            margin: 10px 0;
-        }
-        /* 新增對話區域樣式 */
+        /* 新增對話區域樣式 - 增加高度 */
         #chatContainer {
             margin-top: 20px;
             border: 1px solid #ccc;
-            height: 400px;
+            height: 600px; /* 將高度從400px增加到600px */
             overflow-y: auto;
             padding: 10px;
         }
@@ -108,10 +103,11 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* 當處理中時禁用按鈕的樣式 */
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
+        /* 提示文字 */
+        .hint {
+            font-size: 14px;
+            color: #777;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -119,13 +115,12 @@
     <h2> 歡迎來到孫老師的 n8n AI Agent 測試網頁</h2>
     <div class="input-container">
         <button class="upload-btn" onclick="document.getElementById('imageUpload').click()">+</button>
-        <input type="text" id="question" placeholder="請輸入你的問題" onkeypress="handleKeyPress(event)">
+        <input type="text" id="question" placeholder="請輸入你的問題並按 Enter 發送" onkeypress="handleKeyPress(event)">
         <input type="file" id="imageUpload" accept="image/*" onchange="previewImage()">
     </div>
+    <div class="hint">按 Enter 鍵發送訊息</div>
     <br>
     <img id="preview" style="display: none;" />
-    <br>
-    <button id="submitButton" onclick="askAI()">送出</button>
     
     <!-- 新增loading動畫元素 -->
     <div id="loader" class="loader"></div>
@@ -153,7 +148,7 @@
             }
         }
 
-        // 按Enter鍵也能送出問題
+        // 按Enter鍵送出問題
         function handleKeyPress(event) {
             if (event.key === "Enter") {
                 askAI();
@@ -163,7 +158,6 @@
         function askAI() {
             const question = document.getElementById("question").value;
             const imageFile = document.getElementById("imageUpload").files[0];
-            const submitButton = document.getElementById("submitButton");
             const loader = document.getElementById("loader");
             const chatContainer = document.getElementById("chatContainer");
             
@@ -195,9 +189,9 @@
             // 滾動到底部
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
-            // 顯示loading動畫，禁用按鈕
+            // 顯示loading動畫，禁用輸入
             loader.style.display = "block";
-            submitButton.disabled = true;
+            document.getElementById("question").disabled = true;
             
             const formData = new FormData();
             if (question) formData.append("question", question);
@@ -209,9 +203,9 @@
             })
             .then(response => response.json())
             .then(data => {
-                // 隱藏loading動畫，啟用按鈕
+                // 隱藏loading動畫，啟用輸入
                 loader.style.display = "none";
-                submitButton.disabled = false;
+                document.getElementById("question").disabled = false;
                 
                 // 更新AI訊息
                 aiMessageDiv.innerText = data.output || "無回應";
@@ -230,16 +224,22 @@
                 document.getElementById("question").value = "";
                 document.getElementById("preview").style.display = "none";
                 document.getElementById("imageUpload").value = "";
+                
+                // 自動聚焦輸入欄位
+                document.getElementById("question").focus();
             })
             .catch(error => {
-                // 錯誤時也要隱藏loading動畫，啟用按鈕
+                // 錯誤時也要隱藏loading動畫，啟用輸入
                 loader.style.display = "none";
-                submitButton.disabled = false;
+                document.getElementById("question").disabled = false;
                 console.error("錯誤:", error);
                 aiMessageDiv.innerText = "請求失敗";
                 
                 // 滾動到底部
                 chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                // 自動聚焦輸入欄位
+                document.getElementById("question").focus();
             });
         }
     </script>
