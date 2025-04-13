@@ -240,16 +240,10 @@
                 body: JSON.stringify(requestData)
             };
             
-            // 修改：添加請求超時處理
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超時
-            fetchOptions.signal = controller.signal;
-            
             showDebugInfo("發送請求: " + JSON.stringify(requestData));
             
             fetch("https://tw-03.access.glows.ai:24434/webhook-test/html-webhook", fetchOptions)
             .then(response => {
-                clearTimeout(timeoutId); // 清除超時計時器
                 showDebugInfo("收到HTTP回應狀態: " + response.status);
                 if (!response.ok) {
                     throw new Error("HTTP錯誤，狀態: " + response.status);
@@ -303,13 +297,9 @@
                 document.getElementById("question").focus();
             })
             .catch(error => {
-                clearTimeout(timeoutId); // 清除超時計時器
-                
                 // 修改：添加更具體的錯誤處理
                 let errorMessage;
-                if (error.name === 'AbortError') {
-                    errorMessage = "請求處理時間過長，請再試一次";
-                } else if (!navigator.onLine) {
+                if (!navigator.onLine) {
                     errorMessage = "網絡連接已斷開，請檢查您的網絡設置";
                 } else {
                     errorMessage = "請求處理發生問題，請稍後再試";
