@@ -307,10 +307,12 @@
                 
                 // 修改：添加更具體的錯誤處理
                 let errorMessage;
-                if (!navigator.onLine) {
+                if (error.name === 'AbortError') {
+                    errorMessage = "請求處理時間過長，請再試一次";
+                } else if (!navigator.onLine) {
                     errorMessage = "網絡連接已斷開，請檢查您的網絡設置";
                 } else {
-                    errorMessage = "請求失敗: " + error.message;
+                    errorMessage = "請求處理發生問題，請稍後再試";
                 }
                 
                 // 錯誤時也要隱藏loading動畫，啟用輸入
