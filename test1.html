@@ -21,7 +21,7 @@
       e.preventDefault();
       const formData = new FormData(document.getElementById('upload-form'));
 
-      const response = await fetch("https://your-n8n-domain.com/webhook/image-upload", {
+      const response = await fetch("https://tw-03.access.glows.ai:24434/webhook-test/html-webhook", {
         method: "POST",
         body: formData
       });
