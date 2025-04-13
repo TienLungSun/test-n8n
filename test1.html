@@ -54,12 +54,12 @@
                 return response.json(); // 將回應解析為 JSON 格式
             })
             .then(data => {
-                // 假設 n8n 回傳的 JSON 資料中，LLM 的結果在一個名為 'result' 的欄位
-                if (data && data.result) {
-                    llmResultDisplay.textContent = data.result;
+                // 假設 n8n 回傳的 JSON 資料中，LLM 的結果在一個名為 'output' 的欄位
+                if (data && data.output) {
+                    llmResultDisplay.textContent = data.output;
                     responseContainer.style.display = 'block'; // 顯示結果容器
                 } else {
-                    llmResultDisplay.textContent = "未在回應中找到結果。";
+                    llmResultDisplay.textContent = "未在回應中找到 'output' 欄位。";
                     responseContainer.style.display = 'block';
                 }
             })
