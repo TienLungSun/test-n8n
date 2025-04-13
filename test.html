@@ -109,6 +109,15 @@
             color: #777;
             margin-top: 5px;
         }
+        /* Debug info */
+        .debug-info {
+            margin-top: 10px;
+            padding: 5px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            font-size: 12px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -127,10 +136,25 @@
     
     <!-- 替換response div為對話容器 -->
     <div id="chatContainer"></div>
+    
+    <!-- 新增除錯信息區域 -->
+    <div id="debugInfo" class="debug-info"></div>
 
     <script>
         // 保存對話歷史
         let conversationHistory = [];
+        
+        // 開啟除錯模式
+        const DEBUG_MODE = true;
+        
+        function showDebugInfo(info) {
+            if (DEBUG_MODE) {
+                const debugElement = document.getElementById('debugInfo');
+                debugElement.style.display = 'block';
+                debugElement.innerHTML += '<div>' + info + '</div>';
+                console.log(info);
+            }
+        }
         
         function previewImage() {
             const file = document.getElementById("imageUpload").files[0];
@@ -193,28 +217,78 @@
             loader.style.display = "block";
             document.getElementById("question").disabled = true;
             
-            const formData = new FormData();
-            if (question) formData.append("question", question);
-            if (imageFile) formData.append("image", imageFile);
+            // 清除除錯信息
+            if (DEBUG_MODE) {
+                document.getElementById('debugInfo').innerHTML = '';
+            }
             
-            fetch("https://tw-03.access.glows.ai:24434/webhook-test/803f3f29-989e-45a9-a3ed-326f35a4065c", {
+            // 修改：調整請求數據格式以匹配 n8n 期望的格式
+            const requestData = {
+                body: {
+                    body: {
+                        question: question || "請回答這張圖片"
+                    }
+                }
+            };
+            
+            // 修改：增加圖片處理功能
+            let fetchOptions = {
                 method: "POST",
-                body: formData
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestData)
+            };
+            
+            // 修改：添加請求超時處理
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超時
+            fetchOptions.signal = controller.signal;
+            
+            showDebugInfo("發送請求: " + JSON.stringify(requestData));
+            
+            fetch("https://tw-03.access.glows.ai:24434/webhook-test/803f3f29-989e-45a9-a3ed-326f35a4065c", fetchOptions)
+            .then(response => {
+                clearTimeout(timeoutId); // 清除超時計時器
+                showDebugInfo("收到HTTP回應狀態: " + response.status);
+                if (!response.ok) {
+                    throw new Error("HTTP錯誤，狀態: " + response.status);
+                }
+                return response.text();
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(rawData => {
+                showDebugInfo("原始回應數據: " + rawData);
+                
+                // 嘗試解析JSON
+                let data;
+                try {
+                    data = JSON.parse(rawData);
+                    showDebugInfo("解析後的JSON: " + JSON.stringify(data));
+                } catch (e) {
+                    showDebugInfo("無法解析JSON，使用原始文本: " + e.message);
+                    data = { output: rawData };
+                }
+                
                 // 隱藏loading動畫，啟用輸入
                 loader.style.display = "none";
                 document.getElementById("question").disabled = false;
                 
+                // 改進處理回應的方式 - 嘗試多種可能的回應格式
+                const aiResponse = data.output || 
+                                  data.text || 
+                                  (data.pairedItem && data.pairedItem[0] && data.pairedItem[0].json) || 
+                                  (typeof data === 'string' ? data : JSON.stringify(data));
+                
+                showDebugInfo("處理後的回應: " + aiResponse);
+                
                 // 更新AI訊息
-                aiMessageDiv.innerText = data.output || "無回應";
+                aiMessageDiv.innerText = aiResponse || "無回應";
                 
                 // 將對話添加到歷史
                 conversationHistory.push({
                     question: question,
                     image: imageFile ? URL.createObjectURL(imageFile) : null,
-                    response: data.output || "無回應"
+                    response: aiResponse || "無回應"
                 });
                 
                 // 滾動到底部
@@ -229,11 +303,24 @@
                 document.getElementById("question").focus();
             })
             .catch(error => {
+                clearTimeout(timeoutId); // 清除超時計時器
+                
+                // 修改：添加更具體的錯誤處理
+                let errorMessage;
+                if (error.name === 'AbortError') {
+                    errorMessage = "請求超時，請稍後再試";
+                } else if (!navigator.onLine) {
+                    errorMessage = "網絡連接已斷開，請檢查您的網絡設置";
+                } else {
+                    errorMessage = "請求失敗: " + error.message;
+                }
+                
                 // 錯誤時也要隱藏loading動畫，啟用輸入
                 loader.style.display = "none";
                 document.getElementById("question").disabled = false;
                 console.error("錯誤:", error);
-                aiMessageDiv.innerText = "請求失敗";
+                showDebugInfo("發生錯誤: " + error.message);
+                aiMessageDiv.innerText = errorMessage;
                 
                 // 滾動到底部
                 chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -241,6 +328,23 @@
                 // 自動聚焦輸入欄位
                 document.getElementById("question").focus();
             });
+        }
+        
+        // 增加一個初始提示
+        window.onload = function() {
+            const chatContainer = document.getElementById("chatContainer");
+            const welcomeMessage = document.createElement("div");
+            welcomeMessage.className = "message ai-message";
+            welcomeMessage.innerText = "歡迎使用! 請輸入您的問題或上傳圖片進行對話。";
+            chatContainer.appendChild(welcomeMessage);
+            
+            // 自動聚焦到輸入框
+            document.getElementById("question").focus();
+            
+            // 如果開啟除錯模式，顯示除錯區域
+            if (DEBUG_MODE) {
+                document.getElementById('debugInfo').style.display = 'block';
+            }
         }
     </script>
 </body>
