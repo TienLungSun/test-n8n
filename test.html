@@ -247,7 +247,7 @@
             
             showDebugInfo("發送請求: " + JSON.stringify(requestData));
             
-            fetch("https://tw-03.access.glows.ai:24434/webhook-test/803f3f29-989e-45a9-a3ed-326f35a4065c", fetchOptions)
+            fetch("https://tw-03.access.glows.ai:24434/webhook-test/html-webhook", fetchOptions)
             .then(response => {
                 clearTimeout(timeoutId); // 清除超時計時器
                 showDebugInfo("收到HTTP回應狀態: " + response.status);
