@@ -222,7 +222,7 @@
                 document.getElementById('debugInfo').innerHTML = '';
             }
             
-            // 修改：調整請求數據格式以匹配 n8n 期望的格式
+            // 創建請求的基本資料
             const requestData = {
                 body: {
                     body: {
@@ -231,7 +231,30 @@
                 }
             };
             
-            // 修改：增加圖片處理功能
+            // 如果有圖片，處理圖片
+            if (imageFile) {
+                // 使用 FileReader 將圖片轉換為 base64
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 將 base64 編碼的圖片加入請求資料
+                    requestData.body.body.image = e.target.result.split(',')[1]; // 移除 "data:image/jpeg;base64," 部分
+                    requestData.body.body.imageType = imageFile.type;
+                    requestData.body.body.imageName = imageFile.name;
+                    
+                    // 發送包含圖片的請求
+                    sendRequest(requestData, aiMessageDiv);
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                // 如果沒有圖片，直接發送請求
+                sendRequest(requestData, aiMessageDiv);
+            }
+        }
+
+        // 將實際發送請求的邏輯抽取為單獨的函數
+        function sendRequest(requestData, aiMessageDiv) {
+            showDebugInfo("發送請求: " + JSON.stringify(requestData));
+            
             let fetchOptions = {
                 method: "POST",
                 headers: {
@@ -239,8 +262,6 @@
                 },
                 body: JSON.stringify(requestData)
             };
-            
-            showDebugInfo("發送請求: " + JSON.stringify(requestData));
             
             fetch("https://tw-03.access.glows.ai:24434/webhook-test/html-webhook", fetchOptions)
             .then(response => {
@@ -280,8 +301,8 @@
                 
                 // 將對話添加到歷史
                 conversationHistory.push({
-                    question: question,
-                    image: imageFile ? URL.createObjectURL(imageFile) : null,
+                    question: document.getElementById("question").value,
+                    image: document.getElementById("imageUpload").files[0] ? URL.createObjectURL(document.getElementById("imageUpload").files[0]) : null,
                     response: aiResponse || "無回應"
                 });
                 
@@ -297,7 +318,7 @@
                 document.getElementById("question").focus();
             })
             .catch(error => {
-                // 修改：添加更具體的錯誤處理
+                // 錯誤處理
                 let errorMessage;
                 if (!navigator.onLine) {
                     errorMessage = "網絡連接已斷開，請檢查您的網絡設置";
