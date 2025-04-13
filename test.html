@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> n8n AI Agent 測試網頁 </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+            font-size: 20px;
+        }
+        h2 {
+            font-size: 28px;
+        }
+        .input-container {
+            position: relative;
+            display: flex;
+            margin: 10px 0;
+            align-items: center;
+        }
+        #question {
+            flex-grow: 1;
+            font-size: 18px;
+            padding: 10px;
+            padding-left: 40px; /* 為左側的+號按鈕預留空間 */
+            height: 24px; /* 設定固定高度以便更準確地垂直居中 */
+            line-height: 24px; /* 確保文字垂直居中 */
+        }
+        .upload-btn {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #555;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+            height: 24px;
+            line-height: 1;
+        }
+        .upload-btn:hover {
+            color: #000;
+        }
+        #imageUpload {
+            display: none;
+        }
+        /* 新增對話區域樣式 - 增加高度 */
+        #chatContainer {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            height: 600px; /* 將高度從400px增加到600px */
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #e6f7ff;
+            margin-left: auto;
+            text-align: right;
+        }
+        .ai-message {
+            background-color: #f0f0f0;
+            margin-right: auto;
+        }
+        .message-image {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        #preview {
+            margin-top: 20px;
+            max-width: 200px;
+            max-height: 200px;
+            display: block;
+        }
+        /* loading動畫樣式 */
+        .loader {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 提示文字 */
+        .hint {
+            font-size: 14px;
+            color: #777;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2> 歡迎來到孫老師的 n8n AI Agent 測試網頁</h2>
+    <div class="input-container">
+        <button class="upload-btn" onclick="document.getElementById('imageUpload').click()">+</button>
+        <input type="text" id="question" placeholder="請輸入你的問題並按 Enter 發送" onkeypress="handleKeyPress(event)">
+        <input type="file" id="imageUpload" accept="image/*" onchange="previewImage()">
+    </div>
+    <div class="hint">按 Enter 鍵發送訊息</div>
+    <br>
+    <img id="preview" style="display: none;" />
+    
+    <!-- 新增loading動畫元素 -->
+    <div id="loader" class="loader"></div>
+    
+    <!-- 替換response div為對話容器 -->
+    <div id="chatContainer"></div>
+
+    <script>
+        // 保存對話歷史
+        let conversationHistory = [];
+        
+        function previewImage() {
+            const file = document.getElementById("imageUpload").files[0];
+            const preview = document.getElementById("preview");
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = "none";
+            }
+        }
+
+        // 按Enter鍵送出問題
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                askAI();
+            }
+        }
+
+        function askAI() {
+            const question = document.getElementById("question").value;
+            const imageFile = document.getElementById("imageUpload").files[0];
+            const loader = document.getElementById("loader");
+            const chatContainer = document.getElementById("chatContainer");
+            
+            if (!question && !imageFile) {
+                alert("請輸入問題或上傳圖片");
+                return;
+            }
+            
+            // 添加用戶訊息到對話容器
+            const userMessageDiv = document.createElement("div");
+            userMessageDiv.className = "message user-message";
+            userMessageDiv.innerText = question || "已上傳圖片";
+            chatContainer.appendChild(userMessageDiv);
+            
+            // 如果有圖片，添加到用戶訊息
+            if (imageFile) {
+                const userImageElement = document.createElement("img");
+                userImageElement.className = "message-image";
+                userImageElement.src = URL.createObjectURL(imageFile);
+                userMessageDiv.appendChild(userImageElement);
+            }
+            
+            // 添加AI訊息佔位符
+            const aiMessageDiv = document.createElement("div");
+            aiMessageDiv.className = "message ai-message";
+            aiMessageDiv.innerText = "處理中，請稍候...";
+            chatContainer.appendChild(aiMessageDiv);
+            
+            // 滾動到底部
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // 顯示loading動畫，禁用輸入
+            loader.style.display = "block";
+            document.getElementById("question").disabled = true;
+            
+            // 修改這裡: 使用JSON格式而不是FormData
+            const requestData = {
+                body: {
+                    question: question || "請回答這張圖片"
+                }
+            };
+            
+            fetch("https://tw-03.access.glows.ai:24434/webhook-test/803f3f29-989e-45a9-a3ed-326f35a4065c", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 隱藏loading動畫，啟用輸入
+                loader.style.display = "none";
+                document.getElementById("question").disabled = false;
+                
+                // 改進處理回應的方式 - 嘗試多種可能的回應格式
+                const aiResponse = data.output || data.text || 
+                                  (data.pairedItem && data.pairedItem[0] && data.pairedItem[0].json) || 
+                                  (typeof data === 'string' ? data : JSON.stringify(data));
+                
+                // 更新AI訊息
+                aiMessageDiv.innerText = aiResponse || "無回應";
+                
+                // 將對話添加到歷史
+                conversationHistory.push({
+                    question: question,
+                    image: imageFile ? URL.createObjectURL(imageFile) : null,
+                    response: aiResponse || "無回應"
+                });
+                
+                // 滾動到底部
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                // 清空輸入欄位和預覽圖片
+                document.getElementById("question").value = "";
+                document.getElementById("preview").style.display = "none";
+                document.getElementById("imageUpload").value = "";
+                
+                // 自動聚焦輸入欄位
+                document.getElementById("question").focus();
+            })
+            .catch(error => {
+                // 錯誤時也要隱藏loading動畫，啟用輸入
+                loader.style.display = "none";
+                document.getElementById("question").disabled = false;
+                console.error("錯誤:", error);
+                aiMessageDiv.innerText = "請求失敗: " + error.message;
+                
+                // 滾動到底部
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                // 自動聚焦輸入欄位
+                document.getElementById("question").focus();
+            });
+        }
+        
+        // 增加一個初始提示
+        window.onload = function() {
+            const chatContainer = document.getElementById("chatContainer");
+            const welcomeMessage = document.createElement("div");
+            welcomeMessage.className = "message ai-message";
+            welcomeMessage.innerText = "歡迎使用! 請輸入您的問題或上傳圖片進行對話。";
+            chatContainer.appendChild(welcomeMessage);
+        }
+    </script>
+</body>
+</html>
