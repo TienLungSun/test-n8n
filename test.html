@@ -307,9 +307,7 @@
                 
                 // 修改：添加更具體的錯誤處理
                 let errorMessage;
-                if (error.name === 'AbortError') {
-                    errorMessage = "請求超時，請稍後再試";
-                } else if (!navigator.onLine) {
+                if (!navigator.onLine) {
                     errorMessage = "網絡連接已斷開，請檢查您的網絡設置";
                 } else {
                     errorMessage = "請求失敗: " + error.message;
