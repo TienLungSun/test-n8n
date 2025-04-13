@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prompt 輸入與結果顯示</title>
+    <style>
+        #response-container {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            white-space: pre-wrap; /* 保留換行和空白 */
+        }
+    </style>
+</head>
+<body>
+    <h1>請輸入您的 Prompt</h1>
+    <form id="prompt-form">
+        <div>
+            <label for="prompt">Prompt:</label>
+            <input type="text" id="prompt" name="prompt" required>
+        </div>
+        <br>
+        <button type="submit">送出</button>
+    </form>
+
+    <div id="response-container" style="display: none;">
+        <h2>LLM 結果：</h2>
+        <pre id="llm-result"></pre>
+    </div>
+
+    <script>
+        const form = document.getElementById('prompt-form');
+        const promptInput = document.getElementById('prompt');
+        const responseContainer = document.getElementById('response-container');
+        const llmResultDisplay = document.getElementById('llm-result');
+        const webhookUrl = "https://tw-03.access.glows.ai:24434/webhook-test/803f3f29-989e-45a9-a3ed-326f35a4065c";
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // 阻止表單的預設提交行為
+
+            const promptValue = promptInput.value;
+
+            // 發送 POST 請求到 n8n webhook
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // 告訴伺服器我們發送的是 JSON 格式的資料
+                },
+                body: JSON.stringify({ prompt: promptValue }) // 將 prompt 轉換為 JSON 字串
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json(); // 將回應解析為 JSON 格式
+            })
+            .then(data => {
+                // 假設 n8n 回傳的 JSON 資料中，LLM 的結果在一個名為 'result' 的欄位
+                if (data && data.result) {
+                    llmResultDisplay.textContent = data.result;
+                    responseContainer.style.display = 'block'; // 顯示結果容器
+                } else {
+                    llmResultDisplay.textContent = "未在回應中找到結果。";
+                    responseContainer.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error sending prompt or receiving response:', error);
+                llmResultDisplay.textContent = `發生錯誤：${error.message}`;
+                responseContainer.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
