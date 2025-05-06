@@ -1,0 +1,255 @@
+{
+  "name": "(Attach file) 1. Extract content",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        40
+      ],
+      "id": "b3a51fc7-8260-493d-bd24-ed71626affbe",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -280
+      ],
+      "id": "1197ae14-b6f3-4b39-bc30-f331d7fe8630",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/datadrive/test/*.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -540,
+        -280
+      ],
+      "id": "00ccbd2a-be1e-4856-884e-fb666b0c326e",
+      "name": "Read pdf"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/datadrive/test/*.PDF",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -540,
+        -100
+      ],
+      "id": "ca1d1c97-8a81-4d16-9fa6-6ba2d4f2b483",
+      "name": "Read PDF"
+    },
+    {
+      "parameters": {
+        "content": "# 測試檔案放在 /datadrive/test folder",
+        "height": 140,
+        "width": 440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1180,
+        -240
+      ],
+      "typeVersion": 1,
+      "id": "addb0265-b827-4ce0-923d-339f5fc75d96",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -100
+      ],
+      "id": "9f3c4864-19c4-49f5-8134-91cbf5ada400",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/datadrive/test/*.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -540,
+        300
+      ],
+      "id": "14950dc2-705b-4027-8a9e-216ad67626f9",
+      "name": "Read csv"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# 將每一筆資料格式化為字串\nfile_string = \"\"\nfor item in items:\n  \n  file_string = file_string + \"fixed acidity: \" + item[\"json\"][\"fixed acidity\"] +\", \"\n  file_string = file_string + \"volatile acidity: \" + item[\"json\"][\"volatile acidity\"] +\", \"\n  file_string = file_string + \"crtric acid: \" + item[\"json\"][\"citric acid\"] +\", \"\n  file_string = file_string + \"residual sugar: \" + item[\"json\"][\"residual sugar\"] +\", \"\n\n\n# 輸出為 n8n 可讀格式\nreturn [{\n    \"json\": {\n        \"prompt\": file_string\n    }\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        300
+      ],
+      "id": "4393de49-4b1c-48dd-b9fc-b8a82811ab75",
+      "name": "改 json format2"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/datadrive/test/*.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -540,
+        100
+      ],
+      "id": "d0c11415-43aa-4047-b66d-c3ec972a51b9",
+      "name": "Read txt"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        100
+      ],
+      "id": "877d7b02-270e-40c4-aca7-2da0525063e9",
+      "name": "Extract from txt"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        300
+      ],
+      "id": "09578048-8c5d-411d-aef8-03904261c64c",
+      "name": "Extract from csv"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read pdf",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read PDF",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read csv",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read txt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read pdf": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read csv": {
+      "main": [
+        [
+          {
+            "node": "Extract from csv",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read txt": {
+      "main": [
+        [
+          {
+            "node": "Extract from txt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from txt": {
+      "main": [
+        []
+      ]
+    },
+    "Extract from csv": {
+      "main": [
+        [
+          {
+            "node": "改 json format2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "28d9d589-e235-4f34-86ee-8ec71dfbe0fd",
+  "meta": {
+    "instanceId": "ed4784af1f74bbc62add1178f4aebb26503cdf990ea025c651402f03e02f9665"
+  },
+  "id": "uTIRGhGe1My2gOUi",
+  "tags": []
+}

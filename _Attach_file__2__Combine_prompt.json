@@ -1,0 +1,277 @@
+{
+  "name": "(Attach file) 2. Combine prompt",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        280,
+        -80
+      ],
+      "id": "7d74c815-212c-450e-8818-d7a898b1189e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "111"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        160
+      ],
+      "id": "cb1afcc7-2cab-4e9c-a85d-71b7f1990533",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "model": "gemma3:27b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        200,
+        160
+      ],
+      "id": "336c943e-0844-4a68-acd1-538b4b9f75d9",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "idFdof8MKdlhG5U4",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        20,
+        160
+      ],
+      "id": "8eb4afeb-4c6e-4898-ac5f-ccc3030d4f4d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "DGV69hX0a2kSKZ4y",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -20
+      ],
+      "id": "e4ae862f-5223-40e6-b531-5b09031be87d",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5bd13c67-6b23-48fd-97fd-cd5501793afa",
+              "name": "prompt",
+              "value": "quality 7 分以上的酒跟評分3分以下的酒那些特徵值較明顯",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -500,
+        20
+      ],
+      "id": "9f5ae324-e2ff-4ea0-9d6c-e0de6bc59533",
+      "name": "user prompt"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -120,
+        -80
+      ],
+      "id": "d7a38857-0b7a-49a6-8ff8-2d562b5f6a86",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        -200
+      ],
+      "id": "46dcc4d9-a78c-495a-a3c0-39467acc99db",
+      "name": "Extract texts from File"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "import json\n\n# 將 JsProxy 轉換為 Python 原生類型的函數\ndef convert_jsproxy(obj):\n    \"\"\"將 JsProxy 對象轉換為 Python 原生類型\"\"\"\n    if hasattr(obj, 'keys') and callable(getattr(obj, 'keys')):\n        # 如果物件有 keys 方法，視為字典處理\n        return {k: convert_jsproxy(obj[k]) for k in obj.keys()}\n    elif hasattr(obj, '__iter__') and not isinstance(obj, str):\n        # 如果物件是可迭代的（但不是字符串），視為列表處理\n        return [convert_jsproxy(item) for item in obj]\n    else:\n        # 基本類型直接返回\n        return obj\n\n# 前面為數據\ndata_items = items[:-1]\n\n# 轉換 JsProxy 物件為 Python 原生類型\npython_data = [convert_jsproxy(item.json) for item in data_items]\n\n# 轉成可讀的純文字（含縮排）\ntext = json.dumps(python_data, indent=2, ensure_ascii=False)\n\n# 處理 prompt (last item)\nlast_item = items[-1]\nprompt = convert_jsproxy(last_item.json)[\"prompt\"]  # 使用轉換函數\n\n# 將 Python 數據轉換為字符串用於構建提示\ndata_str = json.dumps(python_data, ensure_ascii=False)\n\nresult = \"請依據這個背景知識 \" + \"\\\"\" + data_str + \"\\\"\" + \"用繁體中文回答使用者的問題\" + \"\\\"\" + prompt + \"\\\"\"\n\n# 返回結果\nreturn {\n    \"prompt\": result\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        100,
+        -80
+      ],
+      "id": "706a7b7c-df26-4835-87bf-e97c5701bba2",
+      "name": "結合 prompt + text"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/datadrive/test/*.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -200
+      ],
+      "id": "71d4e6d9-56fe-4668-9174-080730003de1",
+      "name": "Read txt"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "user prompt",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read txt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "user prompt": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "結合 prompt + text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract texts from File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "結合 prompt + text": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read txt": {
+      "main": [
+        [
+          {
+            "node": "Extract texts from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "10b342b3-cb82-4b21-ab7e-86b47a1ce41d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ed4784af1f74bbc62add1178f4aebb26503cdf990ea025c651402f03e02f9665"
+  },
+  "id": "ixCGm36nVGmtIloI",
+  "tags": []
+}
